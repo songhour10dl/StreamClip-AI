@@ -2,15 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.models.database import get_db, Project
+from app.services.downloader import VideoDownloader
+from app.workers.processor import start_processing
 from pydantic import BaseModel
 from datetime import datetime
 import uuid
+import os
 
 router = APIRouter()
+
+# Initialize downloader
+base_path = os.path.join(os.path.expanduser("~"), "StreamClipAI", "Projects")
+downloader = VideoDownloader(base_path)
 
 class ProjectCreate(BaseModel):
     url: str
     platform: str
+
+class URLValidate(BaseModel):
+    url: str
 
 class ProjectResponse(BaseModel):
     id: str
@@ -50,9 +60,16 @@ async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_project)
     
-    # TODO: Queue processing job
+    # Start processing in background
+    await start_processing(new_project.id)
     
     return new_project
+
+@router.post("/validate")
+async def validate_url(data: URLValidate):
+    """Validate URL and get video information"""
+    result = downloader.validate_url(data.url)
+    return result
 
 @router.delete("/{project_id}")
 async def delete_project(project_id: str, db: Session = Depends(get_db)):
