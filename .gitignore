@@ -1,0 +1,157 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+build/
+out/
+
+# Tauri
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/env/
+backend/.venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+Thumbs.db
+
+# User data and generated content
+Projects/
+Models/
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+Logs/
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+.cache/
+Cache/
+
+# AI Models
+*.pt
+*.pth
+*.onnx
+*.bin
+*.safetensors
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.flv
+*.webm
+*.m4v
+
+# Audio files
+*.mp3
+*.wav
+*.flac
+*.aac
+*.ogg
+
+# Image files (except icons)
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.ico
+!src/assets/**/*.png
+!src/assets/**/*.jpg
+!src/assets/**/*.svg
+
+# Secrets and credentials
+*.key
+*.pem
+*.cert
+credentials.json
+secrets.json
+config.local.*
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+coverage/
+.nyc_output/
+
+# Documentation builds
+docs/_build/
+site/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Downloaded videos and transcripts
+*.srt
+*.vtt
+*.ass
+transcripts/
+downloads/
+
+# FFmpeg temp files
+ffmpeg2pass-*.log
+*.ffindex
+
+# Thumbnails
+thumbnails/
+*.thumb.jpg
+
+# Exports (don't commit user exports)
+Exports/
+exports/
