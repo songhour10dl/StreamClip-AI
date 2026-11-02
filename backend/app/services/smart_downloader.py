@@ -39,18 +39,47 @@ class SmartDownloader:
                 if not info:
                     raise Exception("No video information returned")
                 
+                # Check if video actually has content
+                formats = info.get('formats', [])
+                if not formats:
+                    raise Exception("Video has no available formats - it may be deleted or private")
+                
+                # Get duration - if 0, try to get from format
+                duration = info.get('duration', 0)
+                if duration == 0 and formats:
+                    # Try to get duration from the first format
+                    for fmt in formats:
+                        if fmt.get('duration'):
+                            duration = fmt.get('duration', 0)
+                            break
+                
+                # Get uploader info from multiple possible fields
+                uploader = (
+                    info.get('uploader') or 
+                    info.get('channel') or 
+                    info.get('creator') or
+                    info.get('uploader_id') or
+                    'Unknown Streamer'
+                )
+                
+                # Get title - use ID if title is generic
+                title = info.get('title', 'Untitled Broadcast')
+                if title == 'Untitled Broadcast' and info.get('id'):
+                    title = f"Twitch VOD {info.get('id')}"
+                
                 return {
                     'id': info.get('id', str(uuid.uuid4())),
-                    'title': info.get('title', 'Untitled Broadcast'),
-                    'duration': info.get('duration', 0),
+                    'title': title,
+                    'duration': duration,
                     'thumbnail': info.get('thumbnail', ''),
-                    'uploader': info.get('uploader', info.get('channel', 'Unknown')),
+                    'uploader': uploader,
                     'upload_date': info.get('upload_date', ''),
                     'description': info.get('description', ''),
                     'view_count': info.get('view_count', 0),
-                    'formats': len(info.get('formats', [])),
+                    'formats': len(formats),
                     'webpage_url': info.get('webpage_url', url),
-                    'url': url,  # Store original URL for later clip extraction
+                    'url': url,
+                    'can_download': len(formats) > 0,  # Flag to indicate downloadability
                 }
         except yt_dlp.utils.DownloadError as e:
             error_msg = str(e)
