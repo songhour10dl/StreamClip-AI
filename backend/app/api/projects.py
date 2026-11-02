@@ -92,10 +92,29 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
         ProcessingJob.status.in_(["downloading", "transcribing", "analyzing", "editing", "rendering"])
     ).count()
     
+    
+    # Calculate actual storage usage
+    storage_used = 0
+    base_path = Path(os.path.expanduser("~")) / "StreamClipAI" / "Projects"
+    
+    if base_path.exists():
+        for item in base_path.rglob('*'):
+            if item.is_file():
+                try:
+                    storage_used += item.stat().st_size
+                except (OSError, PermissionError):
+                    pass  # Skip files we can't access
+    
+    # Convert to GB with 2 decimal places
+    storage_gb = storage_used / (1024 ** 3)
+    storage_used_str = f"{storage_gb:.2f} GB"
+    
     return {
         "total_projects": total_projects,
         "videos_processed": videos_processed,
         "highlights_generated": highlights_generated,
         "processing_jobs": processing_jobs,
-        "storage_used": "0 GB"  # TODO: Calculate actual storage
+        "storage_used": storage_used_str
     }
+
+

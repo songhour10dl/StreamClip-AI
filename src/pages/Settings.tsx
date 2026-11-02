@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Save, HardDrive, Cpu, Monitor } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, HardDrive, Cpu, Monitor, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -16,10 +16,60 @@ function SettingsPage() {
     language: 'auto',
   });
 
-  const handleSave = () => {
-    // TODO: Save settings to backend
-    console.log('Saving settings:', settings);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/settings/');
+        if (response.ok) {
+          const data = await response.json();
+          // Parse and merge with defaults
+          setSettings(prev => ({
+            ...prev,
+            ...data
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveStatus('idle');
+    try {
+      const response = await fetch('http://localhost:8000/api/settings/', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      
+      if (!response.ok) throw new Error('Failed to save settings');
+      
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      setSaveStatus('error');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-purple-500" size={40} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -183,14 +233,40 @@ function SettingsPage() {
           </div>
         </div>
 
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          className="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-        >
-          <Save size={20} />
-          Save Settings
-        </button>
+        {/* Save Button with Status */}
+        <div className="space-y-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                Save Settings
+              </>
+            )}
+          </button>
+          
+          {saveStatus === 'success' && (
+            <div className="flex items-center justify-center gap-2 text-green-500 bg-green-500/10 py-2 rounded-lg">
+              <CheckCircle size={20} />
+              <span>Settings saved successfully</span>
+            </div>
+          )}
+          
+          {saveStatus === 'error' && (
+            <div className="flex items-center justify-center gap-2 text-red-500 bg-red-500/10 py-2 rounded-lg">
+              <XCircle size={20} />
+              <span>Failed to save settings. Please try again.</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
