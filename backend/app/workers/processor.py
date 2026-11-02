@@ -77,7 +77,7 @@ class ProcessingWorker:
                 project.duration = download_result['metadata'].get('duration', 0)
                 project.thumbnail = download_result['metadata'].get('thumbnail', '')
                 project.status = 'completed'
-                project.metadata = str(download_result['metadata'])
+                project.video_metadata = str(download_result['metadata'])
                 
                 # Update job
                 job.status = 'completed'
