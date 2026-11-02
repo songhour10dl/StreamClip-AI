@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.models.database import get_db, Project
-from app.services.downloader import VideoDownloader
-from app.workers.processor import start_processing
+from app.services.smart_downloader import SmartDownloader
+from app.workers.smart_processor import start_smart_processing
 from pydantic import BaseModel
 from datetime import datetime
 import uuid
@@ -11,9 +11,9 @@ import os
 
 router = APIRouter()
 
-# Initialize downloader
+# Initialize smart downloader
 base_path = os.path.join(os.path.expanduser("~"), "StreamClipAI", "Projects")
-downloader = VideoDownloader(base_path)
+downloader = SmartDownloader(base_path)
 
 class ProjectCreate(BaseModel):
     url: str
@@ -60,8 +60,8 @@ async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_project)
     
-    # Start processing in background
-    await start_processing(new_project.id)
+    # Start SMART processing (audio-only, fast analysis)
+    await start_smart_processing(new_project.id)
     
     return new_project
 
@@ -92,10 +92,29 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
         ProcessingJob.status.in_(["downloading", "transcribing", "analyzing", "editing", "rendering"])
     ).count()
     
+    
+    # Calculate actual storage usage
+    storage_used = 0
+    base_path = Path(os.path.expanduser("~")) / "StreamClipAI" / "Projects"
+    
+    if base_path.exists():
+        for item in base_path.rglob('*'):
+            if item.is_file():
+                try:
+                    storage_used += item.stat().st_size
+                except (OSError, PermissionError):
+                    pass  # Skip files we can't access
+    
+    # Convert to GB with 2 decimal places
+    storage_gb = storage_used / (1024 ** 3)
+    storage_used_str = f"{storage_gb:.2f} GB"
+    
     return {
         "total_projects": total_projects,
         "videos_processed": videos_processed,
         "highlights_generated": highlights_generated,
         "processing_jobs": processing_jobs,
-        "storage_used": "0 GB"  # TODO: Calculate actual storage
+        "storage_used": storage_used_str
     }
+
+

@@ -33,19 +33,34 @@ class VideoDownloader:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 
+                if not info:
+                    raise Exception("No video information returned")
+                
                 return {
                     'id': info.get('id', str(uuid.uuid4())),
-                    'title': info.get('title', 'Unknown'),
+                    'title': info.get('title', 'Untitled Broadcast'),
                     'duration': info.get('duration', 0),
                     'thumbnail': info.get('thumbnail', ''),
-                    'uploader': info.get('uploader', 'Unknown'),
+                    'uploader': info.get('uploader', info.get('channel', 'Unknown')),
                     'upload_date': info.get('upload_date', ''),
                     'description': info.get('description', ''),
                     'view_count': info.get('view_count', 0),
                     'formats': len(info.get('formats', [])),
                     'webpage_url': info.get('webpage_url', url),
                 }
+        except yt_dlp.utils.DownloadError as e:
+            error_msg = str(e)
+            if 'does not exist' in error_msg or 'not available' in error_msg:
+                raise Exception("Video not found. It may be deleted, private, or the URL is incorrect.")
+            elif 'Private video' in error_msg:
+                raise Exception("This video is private and cannot be accessed.")
+            elif 'removed' in error_msg:
+                raise Exception("This video has been removed by the uploader.")
+            else:
+                raise Exception(f"Cannot access video: {error_msg}")
         except Exception as e:
+            if 'yt_dlp' in str(type(e)):
+                raise Exception(f"Video extraction failed: {str(e)}")
             raise Exception(f"Failed to extract video info: {str(e)}")
     
     def download_video(

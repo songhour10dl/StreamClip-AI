@@ -75,7 +75,7 @@ class CompleteProcessingWorker:
                 project.title = download_result['metadata'].get('title', 'Unknown')
                 project.duration = download_result['metadata'].get('duration', 0)
                 project.thumbnail = download_result['metadata'].get('thumbnail', '')
-                project.metadata = json.dumps(download_result['metadata'])
+                project.video_metadata = json.dumps(download_result['metadata'])
                 db.commit()
                 
                 job.logs += f'✓ Video downloaded: {download_result["video_path"]}\n'
