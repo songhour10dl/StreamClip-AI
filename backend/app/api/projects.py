@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.models.database import get_db, Project
-from app.services.downloader import VideoDownloader
-from app.workers.processor import start_processing
+from app.services.smart_downloader import SmartDownloader
+from app.workers.smart_processor import start_smart_processing
 from pydantic import BaseModel
 from datetime import datetime
 import uuid
@@ -11,9 +11,9 @@ import os
 
 router = APIRouter()
 
-# Initialize downloader
+# Initialize smart downloader
 base_path = os.path.join(os.path.expanduser("~"), "StreamClipAI", "Projects")
-downloader = VideoDownloader(base_path)
+downloader = SmartDownloader(base_path)
 
 class ProjectCreate(BaseModel):
     url: str
@@ -60,8 +60,8 @@ async def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_project)
     
-    # Start processing in background
-    await start_processing(new_project.id)
+    # Start SMART processing (audio-only, fast analysis)
+    await start_smart_processing(new_project.id)
     
     return new_project
 
